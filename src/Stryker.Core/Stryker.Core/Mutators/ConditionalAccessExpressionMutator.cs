@@ -103,12 +103,11 @@ namespace Stryker.Core.Mutators
         private static Mutation CreateInvocationExpressionMutation(ConditionalAccessExpressionSyntax node)
         {
             var invocationExpression = node.WhenNotNull as InvocationExpressionSyntax;
-
             var leftExpr = SyntaxFactory.MemberAccessExpression(
                     SyntaxKind.SimpleMemberAccessExpression,
                     node.Expression,
                     SyntaxFactory.Token(SyntaxKind.DotToken),
-                    (invocationExpression.Expression as MemberBindingExpressionSyntax).Name);
+                    ((invocationExpression.Expression as MemberAccessExpressionSyntax).Expression as MemberBindingExpressionSyntax).Name);
 
             var replacementNode = SyntaxFactory.InvocationExpression(leftExpr, invocationExpression.ArgumentList);
 

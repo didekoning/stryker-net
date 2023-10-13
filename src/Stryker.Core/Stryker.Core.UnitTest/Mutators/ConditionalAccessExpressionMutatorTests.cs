@@ -20,6 +20,7 @@ namespace Stryker.Core.UnitTest.Mutators
         [InlineData("a?.b", "a.b")]
         [InlineData("a?.b?.c?.d", "a.b?.c?.d")]
         [InlineData("a.b?.c?.d", "a.b.c?.d")]
+        [InlineData("a.b?.c?.d", "a.b?.c.d")]
         [InlineData("a?.b()", "a.b()")]
         [InlineData("a?.b()?.c()", "a.b()?.c()")]
         [InlineData("a?.b?.c()", "a.b?.c()")]

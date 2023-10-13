@@ -1509,5 +1509,23 @@ else        {
         }return default(bool);}}}}";
             ShouldMutateSourceInClassToExpected(source, expected);
         }
+
+        [Fact]
+        public void ShouldTest()
+        {
+            var source = @"var x = Father.Father?.Father?.Father.Where(x => x.Parent?.Age == 40);";
+
+            var expected = @"var x = (StrykerNamespace.MutantControl.IsActive(0)?Father.Father.Father?.Father.Where(x => x.Parent?.Age == 40):Father.Father?(StrykerNamespace.MutantControl.IsActive(1)?.Father.Father(x => x.Parent?.Age == 40):.Father?.Father.Where(x => (StrykerNamespace.MutantControl.IsActive(2)?x.Parent?.Age != 40:(StrykerNamespace.MutantControl.IsActive(3)?x.Parent.Age :x.Parent?.Age )== 40))));}";
+            ShouldMutateSourceInClassToExpected(source, expected);
+        }
+
+        //  [Fact]
+        // public void ShouldAlsoTest()
+        // {
+        //     var source = "var x = a.b?.c.d;";
+
+        //     var expected = @"";
+        //     ShouldMutateSourceInClassToExpected(source, expected);
+        // }
     }
 }
