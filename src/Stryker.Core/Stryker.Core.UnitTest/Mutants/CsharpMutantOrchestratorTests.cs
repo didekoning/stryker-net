@@ -707,7 +707,7 @@ Action act = () => Console.WriteLine((StrykerNamespace.MutantControl.IsActive(1)
 		{
 			var array = new []{1, 2};
 
-			var alt1 = array.Count(x => x % 2 == 0);
+			var alt1 = array.Count(x => x % 2 == 0).Sum().First();
 			var alt2 = array.Min();
 		}";
             string expected = @"private void Linq()
@@ -1516,6 +1516,24 @@ else        {
             var source = @"var x = Father.Father?.Father?.Father.Where(x => x.Parent?.Age == 40);";
 
             var expected = @"var x = (StrykerNamespace.MutantControl.IsActive(0)?Father.Father.Father?.Father.Where(x => x.Parent?.Age == 40):Father.Father?(StrykerNamespace.MutantControl.IsActive(1)?.Father.Father(x => x.Parent?.Age == 40):.Father?.Father.Where(x => (StrykerNamespace.MutantControl.IsActive(2)?x.Parent?.Age != 40:(StrykerNamespace.MutantControl.IsActive(3)?x.Parent.Age :x.Parent?.Age )== 40))));}";
+            ShouldMutateSourceInClassToExpected(source, expected);
+        }
+
+        [Fact]
+        public void ShouldTest2()
+        {
+            var source = @"var x = Father.Father?.Father;";
+
+            var expected = @"var x = (StrykerNamespace.MutantControl.IsActive(0)?Father.Father.Father:Father.Father?.Father);";
+            ShouldMutateSourceInClassToExpected(source, expected);
+        }
+
+        [Fact]
+        public void ShouldTest3()
+        {
+            var source = @"var x = Father.Father?.Father?.Father;";
+
+            var expected = @"";
             ShouldMutateSourceInClassToExpected(source, expected);
         }
 

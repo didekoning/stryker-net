@@ -23,6 +23,13 @@ namespace Stryker.Core
                 x.IsKind(SyntaxKind.DeclarationExpression) || x.IsKind(SyntaxKind.DeclarationPattern));
         }
 
+
+        public static bool Test(this ExpressionSyntax node)
+        {
+            return node.ContainsNodeThatVerifies(x =>
+                x.IsKind(SyntaxKind.ConditionalAccessExpression));
+        }
+
         public static bool ContainsNodeThatVerifies(this SyntaxNode node, Func<SyntaxNode, bool> predicate, bool skipBlock = true)
         {
             // check if there is a variable declaration at this scope level
