@@ -13,7 +13,7 @@ namespace Stryker.Core.Mutators
         public override IEnumerable<Mutation> ApplyMutations(ConditionalAccessExpressionSyntax node)
         {
             var original = node;
-            if (node.Parent is ConditionalAccessExpressionSyntax || node.Parent is MemberAccessExpressionSyntax)
+            if (node.Parent is ConditionalAccessExpressionSyntax || node.Parent is MemberAccessExpressionSyntax || node.Parent is ElementAccessExpressionSyntax || node.Parent.Parent is BracketedArgumentListSyntax)
             {
                 yield break;
             }
@@ -40,24 +40,23 @@ namespace Stryker.Core.Mutators
             {
                 ExpressionSyntax next = null;
 
-                if (!(node is ConditionalAccessExpressionSyntax conditionalAccessExpressionSyntax))
+                if (node is not ConditionalAccessExpressionSyntax conditionalAccessExpressionSyntax)
                 {
                     yield break;
                 }
-
-
 
                 yield return conditionalAccessExpressionSyntax.WhenNotNull switch
                 {
                     MemberBindingExpressionSyntax _ => CreateConditionalAccessMemberBindingExpressionMutation(conditionalAccessExpressionSyntax, original),
                     ConditionalAccessExpressionSyntax _ => CreateConditionalAccessMemberAccessExpressionMutation(conditionalAccessExpressionSyntax, original),
+                    ElementBindingExpressionSyntax _ => CreateConditionalAccessElementBindingExpressionMutation(conditionalAccessExpressionSyntax, original),
                     _ => null,
                 };
 
 
                 node = next;
             }
-        
+
         }
 
         private static MemberAccessExpressionSyntax CreateMemberAccessExpression(ConditionalAccessExpressionSyntax node, MemberBindingExpressionSyntax memberBindingExpression)
@@ -107,22 +106,19 @@ namespace Stryker.Core.Mutators
             };
         }
 
-        private static Mutation CreateMemberBindingExpressionMutation(ConditionalAccessExpressionSyntax node)
+        private static Mutation CreateConditionalAccessElementBindingExpressionMutation(ConditionalAccessExpressionSyntax node, ExpressionSyntax original)
         {
-            var leftHandSide = node.Expression as MemberAccessExpressionSyntax;
-            var memberBindingExpression = node.WhenNotNull as MemberBindingExpressionSyntax;
+            var elementBindingExpression = node.WhenNotNull as ElementBindingExpressionSyntax;
 
-            var replacementNode = SyntaxFactory.MemberAccessExpression(
-                            SyntaxKind.SimpleMemberAccessExpression,
-                            leftHandSide,
-                            SyntaxFactory.Token(SyntaxKind.DotToken),
-                            memberBindingExpression.Name);
+            var replacementNode = SyntaxFactory.ElementAccessExpression(
+                node.Expression,
+                elementBindingExpression.ArgumentList);
 
             return new Mutation()
             {
-                OriginalNode = node,
-                DisplayName = "Conditional access expression",
-                ReplacementNode = replacementNode,
+                OriginalNode = original,
+                DisplayName = "Element access expression",
+                ReplacementNode = original.ReplaceNode(node, replacementNode),
                 Type = Mutator.Access
             };
         }

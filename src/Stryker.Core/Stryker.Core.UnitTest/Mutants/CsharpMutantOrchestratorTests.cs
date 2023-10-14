@@ -1536,5 +1536,14 @@ else        {
             var expected = @"var x = (StrykerNamespace.MutantControl.IsActive(1)?Father.Father.Father?.Father:(StrykerNamespace.MutantControl.IsActive(0)?Father.Father?.Father.Father:Father.Father?.Father?.Father));";
             ShouldMutateSourceInClassToExpected(source, expected);
         }
+
+        [Fact]
+        public void ShouldReplaceElementAccess()
+        {
+            var source = @"var x = a?[b];";
+
+            var expected = @"var x = (StrykerNamespace.MutantControl.IsActive(0)?a[b]:a?[b]);";
+            ShouldMutateSourceInClassToExpected(source, expected);
+        }
     }
 }
