@@ -45,24 +45,15 @@ namespace Stryker.Core.Mutators
                     yield break;
                 }
 
-                switch(conditionalAccessExpressionSyntax)
-                {
-                    case ConditionalAccessExpressionSyntax:
-                        yield return CreateConditionalAccessExpressionMutation(conditionalAccessExpressionSyntax, original);
-                          yield break;
-                    default:
-                        break;
-                }
 
-                var whenNotNull = conditionalAccessExpressionSyntax.WhenNotNull;
-                switch (whenNotNull)
+
+                yield return conditionalAccessExpressionSyntax.WhenNotNull switch
                 {
-                    case MemberBindingExpressionSyntax:
-                        yield return CreateMemberBindingExpressionMutation(conditionalAccessExpressionSyntax);
-                        yield break;
-                    default:
-                        break;
-                }
+                    MemberBindingExpressionSyntax _ => CreateConditionalAccessMemberBindingExpressionMutation(conditionalAccessExpressionSyntax, original),
+                    ConditionalAccessExpressionSyntax _ => CreateConditionalAccessMemberAccessExpressionMutation(conditionalAccessExpressionSyntax, original),
+                    _ => null,
+                };
+
 
                 node = next;
             }
@@ -76,15 +67,6 @@ namespace Stryker.Core.Mutators
             SyntaxFactory.Token(SyntaxKind.DotToken),
             memberBindingExpression.Name);
 
-        private static Mutation CreateConditionalAccessExpressionMutation(ConditionalAccessExpressionSyntax node, ExpressionSyntax original)
-        {
-            return node.WhenNotNull switch
-            {
-                MemberBindingExpressionSyntax _ => CreateConditionalAccessMemberBindingExpressionMutation(node, original),
-                ConditionalAccessExpressionSyntax _ => CreateConditionalAccessMemberAccessExpressionMutation(node, original),
-                _ => null,
-            };
-        }
 
         private static Mutation CreateConditionalAccessMemberAccessExpressionMutation(ConditionalAccessExpressionSyntax node, ExpressionSyntax original){
             var whenNotNullExpression = (node.WhenNotNull as ConditionalAccessExpressionSyntax).Expression;
