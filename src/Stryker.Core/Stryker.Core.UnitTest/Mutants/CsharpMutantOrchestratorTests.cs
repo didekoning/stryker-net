@@ -1522,18 +1522,36 @@ else        {
         [Fact]
         public void ShouldTest2()
         {
-            var source = @"var x = Father.Father?.Father;";
+            var source = @"var x = a.b?.c;";
 
-            var expected = @"var x = (StrykerNamespace.MutantControl.IsActive(0)?Father.Father.Father:Father.Father?.Father);";
+            var expected = @"var x = (StrykerNamespace.MutantControl.IsActive(0)?a.b.c:a.b?.c);";
             ShouldMutateSourceInClassToExpected(source, expected);
         }
 
         [Fact]
         public void ShouldTest3()
         {
-            var source = @"var x = Father.Father?.Father?.Father;";
+            var source = @"var x = a.b?.c?.d;";
 
-            var expected = @"var x = (StrykerNamespace.MutantControl.IsActive(1)?Father.Father.Father?.Father:(StrykerNamespace.MutantControl.IsActive(0)?Father.Father?.Father.Father:Father.Father?.Father?.Father));";
+            var expected = @"var x = (StrykerNamespace.MutantControl.IsActive(1)?a.b.c?.d:(StrykerNamespace.MutantControl.IsActive(0)?a.b?.c.d:a.b?.c?.d));";
+            ShouldMutateSourceInClassToExpected(source, expected);
+        }
+
+        [Fact]
+        public void ShouldTest4()
+        {
+            var source = @"var x = a?.b.c;";
+
+            var expected = @"var x = (StrykerNamespace.MutantControl.IsActive(0)?a.b.c:a?.b.c);";
+            ShouldMutateSourceInClassToExpected(source, expected);
+        }
+
+        [Fact]
+        public void ShouldTest5()
+        {
+            var source = @"var x = a?.b.c.d;";
+
+            var expected = @"var x = (StrykerNamespace.MutantControl.IsActive(0)?a.b.c.d:a?.b.c.d);";
             ShouldMutateSourceInClassToExpected(source, expected);
         }
     }
