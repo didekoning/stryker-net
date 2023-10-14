@@ -14,7 +14,7 @@ namespace Stryker.Core.Mutators
         public override IEnumerable<Mutation> ApplyMutations(ConditionalAccessExpressionSyntax node)
         {
             var original = node;
-            if (node.Parent is ConditionalAccessExpressionSyntax || node.Parent is MemberAccessExpressionSyntax)
+            if (node.Parent is ConditionalAccessExpressionSyntax || node.Parent is MemberAccessExpressionSyntax || node.Parent is ElementAccessExpressionSyntax || node.Parent.Parent is BracketedArgumentListSyntax)
             {
                 yield break;
             }
@@ -41,7 +41,7 @@ namespace Stryker.Core.Mutators
             {
                 ExpressionSyntax next = null;
 
-                if (!(node is ConditionalAccessExpressionSyntax conditionalAccessExpressionSyntax))
+                if (node is not ConditionalAccessExpressionSyntax conditionalAccessExpressionSyntax)
                 {
                     yield break;
                 }
@@ -51,6 +51,7 @@ namespace Stryker.Core.Mutators
                     MemberBindingExpressionSyntax _ => CreateConditionalAccessMemberBindingExpressionMutation(conditionalAccessExpressionSyntax, original),
                     ConditionalAccessExpressionSyntax _ => CreateConditionalAccessMemberAccessExpressionMutation(conditionalAccessExpressionSyntax, original),
                     MemberAccessExpressionSyntax _ => CreateMemberAccessExpressionMutation(conditionalAccessExpressionSyntax, original),
+                    ElementBindingExpressionSyntax _ => CreateConditionalAccessElementBindingExpressionMutation(conditionalAccessExpressionSyntax, original),
                     _ => null,
                 };
 
@@ -138,6 +139,23 @@ namespace Stryker.Core.Mutators
             {
                 OriginalNode = original,
                 DisplayName = "Conditional access expression",
+                ReplacementNode = replacementNode,
+                Type = Mutator.Access
+            };
+        }
+
+        private static Mutation CreateConditionalAccessElementBindingExpressionMutation(ConditionalAccessExpressionSyntax node, ExpressionSyntax original)
+        {
+            var elementBindingExpression = node.WhenNotNull as ElementBindingExpressionSyntax;
+
+            var replacementNode = SyntaxFactory.ElementAccessExpression(
+                node.Expression,
+                elementBindingExpression.ArgumentList);
+
+            return new Mutation()
+            {
+                OriginalNode = original,
+                DisplayName = "Element access expression",
                 ReplacementNode = original.ReplaceNode(node, replacementNode),
                 Type = Mutator.Access
             };
