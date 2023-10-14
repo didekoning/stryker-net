@@ -50,7 +50,7 @@ namespace Stryker.Core.Mutators
                 {
                     MemberBindingExpressionSyntax _ => CreateConditionalAccessMemberBindingExpressionMutation(conditionalAccessExpressionSyntax, original),
                     ConditionalAccessExpressionSyntax _ => CreateConditionalAccessMemberAccessExpressionMutation(conditionalAccessExpressionSyntax, original),
-                    MemberAccessExpressionSyntax _ => Test(conditionalAccessExpressionSyntax, original),
+                    MemberAccessExpressionSyntax _ => CreateMemberAccessExpressionMutation(conditionalAccessExpressionSyntax, original),
                     _ => null,
                 };
 
@@ -60,7 +60,7 @@ namespace Stryker.Core.Mutators
 
         }
 
-        private static Mutation Test(ConditionalAccessExpressionSyntax node, ExpressionSyntax original)
+        private static Mutation CreateMemberAccessExpressionMutation(ConditionalAccessExpressionSyntax node, ExpressionSyntax original)
         {
             var leftHandSide = node.Expression;
             var rightHandSide = node.WhenNotNull as MemberAccessExpressionSyntax;
