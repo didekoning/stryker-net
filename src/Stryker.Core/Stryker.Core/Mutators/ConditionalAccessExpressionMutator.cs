@@ -65,23 +65,31 @@ namespace Stryker.Core.Mutators
         {
             var leftHandSide = node.Expression;
             var rightHandSide = node.WhenNotNull as MemberAccessExpressionSyntax;
-            var middle = rightHandSide.Expression;
+            ExpressionSyntax middle = rightHandSide.Expression;
 
-            while (middle is MemberAccessExpressionSyntax innerMemberAccess)
-            {
-  
-              if(innerMemberAccess.Expression is MemberBindingExpressionSyntax test){
+            if(middle is MemberBindingExpressionSyntax memberBinding){
                     leftHandSide = SyntaxFactory.MemberAccessExpression(
-                    SyntaxKind.SimpleMemberAccessExpression,
-                    leftHandSide,
-                    test.Name);
-                }
-                leftHandSide = SyntaxFactory.MemberAccessExpression(
-                    SyntaxKind.SimpleMemberAccessExpression,
-                    leftHandSide,
-                    innerMemberAccess.Name);
+                        SyntaxKind.SimpleMemberAccessExpression,
+                        leftHandSide,
+                        memberBinding.Name);
+            }
 
-                middle = innerMemberAccess.Expression as MemberBindingExpressionSyntax;
+            while (middle is not MemberBindingExpressionSyntax)
+            {
+                if(middle is MemberAccessExpressionSyntax innerMemberAccess){
+                    if(innerMemberAccess.Expression is MemberBindingExpressionSyntax test){
+                        leftHandSide = SyntaxFactory.MemberAccessExpression(
+                        SyntaxKind.SimpleMemberAccessExpression,
+                        leftHandSide,
+                        test.Name);
+                    }
+                    leftHandSide = SyntaxFactory.MemberAccessExpression(
+                        SyntaxKind.SimpleMemberAccessExpression,
+                        leftHandSide,
+                        innerMemberAccess.Name);
+
+                    middle = innerMemberAccess.Expression;
+                }
             }
 
             var replacementNode = SyntaxFactory.MemberAccessExpression(
@@ -104,12 +112,40 @@ namespace Stryker.Core.Mutators
             SyntaxFactory.Token(SyntaxKind.DotToken),
             memberBindingExpression.Name);
 
+        private static ExpressionSyntax AddToTopOfSimpleMemberAccessExpression(ConditionalAccessExpressionSyntax left, ExpressionSyntax memberAccess){
+            var leftHandSide = left.Expression;
+
+             while (memberAccess is not MemberBindingExpressionSyntax)
+            {
+                if(memberAccess is MemberAccessExpressionSyntax innerMemberAccess){
+                    if(innerMemberAccess.Expression is MemberBindingExpressionSyntax test){
+                        leftHandSide = SyntaxFactory.MemberAccessExpression(
+                        SyntaxKind.SimpleMemberAccessExpression,
+                        leftHandSide,
+                        test.Name);
+                    }
+                    leftHandSide = SyntaxFactory.MemberAccessExpression(
+                        SyntaxKind.SimpleMemberAccessExpression,
+                        leftHandSide,
+                        innerMemberAccess.Name);
+
+                    memberAccess = innerMemberAccess.Expression;
+                }
+            }
+            return leftHandSide;
+        }
 
         private static Mutation CreateConditionalAccessMemberAccessExpressionMutation(ConditionalAccessExpressionSyntax node, ExpressionSyntax original)
         {
             var whenNotNullExpression = (node.WhenNotNull as ConditionalAccessExpressionSyntax).Expression;
             var conditionalAccesExpression = node.WhenNotNull as ConditionalAccessExpressionSyntax;
-            var leftHandSide = CreateMemberAccessExpression(node, (MemberBindingExpressionSyntax)whenNotNullExpression);
+            ExpressionSyntax leftHandSide = null;
+            if(whenNotNullExpression is MemberAccessExpressionSyntax){
+            leftHandSide =AddToTopOfSimpleMemberAccessExpression(node, whenNotNullExpression);
+
+            }else if(whenNotNullExpression is MemberBindingExpressionSyntax){
+                leftHandSide = CreateMemberAccessExpression(node, (MemberBindingExpressionSyntax)whenNotNullExpression);
+            }
 
             var rightHandSide = conditionalAccesExpression.WhenNotNull;
 

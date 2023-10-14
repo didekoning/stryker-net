@@ -1555,6 +1555,42 @@ else        {
             ShouldMutateSourceInClassToExpected(source, expected);
         }
 
+        [Fact (Skip = "SimpleMemberAccessError")]
+        public void ShouldTest6()
+        {
+            var source = @"var x = a?.b.c?.d;";
+
+            var expected = @"";
+            ShouldMutateSourceInClassToExpected(source, expected);
+        }
+
+        [Fact]
+        public void ShouldTest7()
+        {
+            var source = @"var x = a?.b.c?.d.e;";
+
+            var expected = @"var x = (StrykerNamespace.MutantControl.IsActive(1)?a.b.c?.d.e:(StrykerNamespace.MutantControl.IsActive(0)?a?.b.c.d.e:a?.b.c?.d.e));";
+            ShouldMutateSourceInClassToExpected(source, expected);
+        }
+
+        [Fact]
+        public void ShouldTest8()
+        {
+            var source = @"var x = a.b?.c.d.e.f?.g.h.i.j?.k.l.m.n?.o.p;";
+
+            var expected = @"";
+            ShouldMutateSourceInClassToExpected(source, expected);
+        }
+
+          [Fact]
+        public void ShouldTest9()
+        {
+            var source = @"var x = a?.b.c.d.e.f?.g;";
+
+            var expected = @"";
+            ShouldMutateSourceInClassToExpected(source, expected);
+        }
+
         [Fact]
         public void ShouldReplaceElementAccess()
         {
