@@ -26,13 +26,14 @@ namespace Stryker.Core.Mutators
 
         private static IEnumerable<Mutation> FindMutableMethodCalls(ExpressionSyntax node, ExpressionSyntax original)
         {
-            while (node is ConditionalAccessExpressionSyntax conditional && conditional.WhenNotNull is ConditionalAccessExpressionSyntax)
+            var currentNode = node;
+            while (currentNode is ConditionalAccessExpressionSyntax conditional && conditional.WhenNotNull is ConditionalAccessExpressionSyntax)
             {
-                foreach (var subMutants in FindMutableMethodCalls(conditional.WhenNotNull, original))
+                foreach (var subMutation in FindMutableMethodCalls(conditional.WhenNotNull, original))
                 {
-                    yield return subMutants;
+                    yield return subMutation;
                 }
-                node = conditional.WhenNotNull;
+                currentNode = conditional.WhenNotNull;
             }
 
             while(true)
@@ -47,7 +48,7 @@ namespace Stryker.Core.Mutators
                 switch(conditionalAccessExpressionSyntax)
                 {
                     case ConditionalAccessExpressionSyntax:
-                        yield return Test(conditionalAccessExpressionSyntax, original);
+                        yield return CreateConditionalAccessExpressionMutation(conditionalAccessExpressionSyntax, original);
                           yield break;
                     default:
                         break;
@@ -63,61 +64,32 @@ namespace Stryker.Core.Mutators
                         break;
                 }
 
-
-                // switch (invocationExpression.Expression)
-                // {
-                //     case MemberAccessExpressionSyntax memberAccessExpression:
-                //         toReplace = memberAccessExpression.Name;
-                //         memberName = memberAccessExpression.Name.Identifier.ValueText;
-                //         next = memberAccessExpression.Expression;
-                //         break;
-                //     case MemberBindingExpressionSyntax memberBindingExpression:
-                //         toReplace = memberBindingExpression.Name;
-                //         memberName = memberBindingExpression.Name.Identifier.ValueText;
-                //         break;
-                //     default:
-                //         yield break;
-                // }
-
-                // if (Enum.TryParse(memberName, out LinqExpression expression) &&
-                //     KindsToMutate.TryGetValue(expression, out var replacementExpression))
-                // {
-                //     if (RequireArguments.Contains(replacementExpression) &&
-                //         invocationExpression.ArgumentList.Arguments.Count == 0)
-                //     {
-                //         yield break;
-                //     }
-
-                //     yield return new Mutation
-                //     {
-                //         DisplayName =
-                //             $"Linq method mutation ({memberName}() to {SyntaxFactory.IdentifierName(replacementExpression.ToString())}())",
-                //         OriginalNode = original,
-                //         ReplacementNode = original.ReplaceNode(toReplace,
-                //             SyntaxFactory.IdentifierName(replacementExpression.ToString())),
-                //         Type = Mutator.Linq
-                //     };
-                // }
                 node = next;
             }
         
         }
 
-         private static Mutation CreateConditionalAccessExpressionMutation(ConditionalAccessExpressionSyntax node)
-        {
-            var whenNotNullExpression = (node.WhenNotNull as ConditionalAccessExpressionSyntax).Expression;
-            var conditionalAccesExpression = node.WhenNotNull as ConditionalAccessExpressionSyntax;
+        private static MemberAccessExpressionSyntax CreateMemberAccessExpression(ConditionalAccessExpressionSyntax node, MemberBindingExpressionSyntax memberBindingExpression)
+        => SyntaxFactory.MemberAccessExpression(
+            SyntaxKind.SimpleMemberAccessExpression,
+            node.Expression,
+            SyntaxFactory.Token(SyntaxKind.DotToken),
+            memberBindingExpression.Name);
 
-            return whenNotNullExpression switch
+        private static Mutation CreateConditionalAccessExpressionMutation(ConditionalAccessExpressionSyntax node, ExpressionSyntax original)
+        {
+            return node.WhenNotNull switch
             {
-                MemberBindingExpressionSyntax memberBindingExpression => CreateConditionalAccessMemberBindingExpressionMutation(node, conditionalAccesExpression, memberBindingExpression),
+                MemberBindingExpressionSyntax _ => CreateConditionalAccessMemberBindingExpressionMutation(node, original),
+                ConditionalAccessExpressionSyntax _ => CreateConditionalAccessMemberAccessExpressionMutation(node, original),
                 _ => null,
             };
         }
 
-        private static Mutation CreateConditionalAccessMemberBindingExpressionMutation(ConditionalAccessExpressionSyntax node, ConditionalAccessExpressionSyntax conditionalAccesExpression, MemberBindingExpressionSyntax memberBindingExpression)
-        {
-            var leftHandSide = CreateMemberAccessExpression(node, memberBindingExpression);
+        private static Mutation CreateConditionalAccessMemberAccessExpressionMutation(ConditionalAccessExpressionSyntax node, ExpressionSyntax original){
+            var whenNotNullExpression = (node.WhenNotNull as ConditionalAccessExpressionSyntax).Expression;
+            var conditionalAccesExpression = node.WhenNotNull as ConditionalAccessExpressionSyntax;
+            var leftHandSide = CreateMemberAccessExpression(node, (MemberBindingExpressionSyntax) whenNotNullExpression);
 
             var rightHandSide = conditionalAccesExpression.WhenNotNull;
 
@@ -129,29 +101,21 @@ namespace Stryker.Core.Mutators
             {
                 OriginalNode = node,
                 DisplayName = "Conditional access expression",
-                ReplacementNode = replacementNode,
+                ReplacementNode = original.ReplaceNode(node, replacementNode),
                 Type = Mutator.Access
             };
         }
 
-        private static MemberAccessExpressionSyntax CreateMemberAccessExpression(ConditionalAccessExpressionSyntax node, MemberBindingExpressionSyntax memberBindingExpression)
-        => SyntaxFactory.MemberAccessExpression(
-            SyntaxKind.SimpleMemberAccessExpression,
-            node.Expression,
-            SyntaxFactory.Token(SyntaxKind.DotToken),
-            memberBindingExpression.Name);
-
-        private static Mutation Test(ConditionalAccessExpressionSyntax node, ExpressionSyntax original)
+        private static Mutation CreateConditionalAccessMemberBindingExpressionMutation(ConditionalAccessExpressionSyntax node, ExpressionSyntax original)
         {
-            var leftHandSide = node.Expression as MemberBindingExpressionSyntax;
             var memberBindingExpression = node.WhenNotNull as MemberBindingExpressionSyntax;
 
             var replacementNode = SyntaxFactory.MemberAccessExpression(
                             SyntaxKind.SimpleMemberAccessExpression,
-                            leftHandSide,
+                            node.Expression,
                             SyntaxFactory.Token(SyntaxKind.DotToken),
                             memberBindingExpression.Name);
-var x = original.ReplaceNode(node, replacementNode);
+            var x = original.ReplaceNode(node, replacementNode);
             return new Mutation()
             {
                 OriginalNode = original,

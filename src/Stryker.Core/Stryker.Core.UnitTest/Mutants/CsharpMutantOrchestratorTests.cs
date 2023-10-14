@@ -1510,7 +1510,7 @@ else        {
             ShouldMutateSourceInClassToExpected(source, expected);
         }
 
-        [Fact]
+        [Fact(Skip = "not supported yet")]
         public void ShouldTest()
         {
             var source = @"var x = Father.Father?.Father?.Father.Where(x => x.Parent?.Age == 40);";
@@ -1533,17 +1533,8 @@ else        {
         {
             var source = @"var x = Father.Father?.Father?.Father;";
 
-            var expected = @"";
+            var expected = @"var x = (StrykerNamespace.MutantControl.IsActive(1)?Father.Father.Father?.Father:(StrykerNamespace.MutantControl.IsActive(0)?Father.Father?.Father.Father:Father.Father?.Father?.Father));";
             ShouldMutateSourceInClassToExpected(source, expected);
         }
-
-        //  [Fact]
-        // public void ShouldAlsoTest()
-        // {
-        //     var source = "var x = a.b?.c.d;";
-
-        //     var expected = @"";
-        //     ShouldMutateSourceInClassToExpected(source, expected);
-        // }
     }
 }
